@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>SPA Приложение с Пользователями и Комментариями</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .user-list, .comments-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .user-list li a {
+            text-decoration: none;
+            color: blue;
+            cursor: pointer;
+        }
+        .user-list li a:hover {
+            text-decoration: underline;
+        }
+        .active {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Пользователи</h1>
+    <div id="app">
+        <ul class="user-list" id="userList"></ul>
+        <div id="commentsSection"></div>
+    </div>
+<script>
+        const app = document.getElementById('app');
+        const userList = document.getElementById('userList');
+        const commentsSection = document.getElementById('commentsSection');
+
+        // Функция для получения и отображения списка пользователей
+        async function fetchUsers() {
+            try {
+                const response = await axios.get('https://jsonplaceholder.typicode.com/users');
+                const users = response.data;
+                renderUserList(users);
+            } catch (error) {
+                console.error('Ошибка при получении пользователей:', error);
+                userList.innerHTML = '<li>Не удалось загрузить пользователей.</li>';
+            }
+        }
+
+        // Функция для рендеринга списка пользователей
+        function renderUserList(users) {
+            userList.innerHTML = '';
+            users.forEach(user => {
+                const li = document.createElement('li');
+                const a = document.createElement('a');
+                a.textContent = user.name;
+                a.href = `#user-${user.id}`;
+                a.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    navigateToUser(user.id);
+                });
+                li.appendChild(a);
+                userList.appendChild(li);
+            });
+        }
+
+        // Функция для навигации к пользователю
+        function navigateToUser(userId) {
+            window.location.hash = `user-${userId}`;
+            showUserComments(userId);
+        }
+
+        // Функция для получения и отображения комментариев пользователя
+        async function showUserComments(userId) {
+            try {
+                // Получаем посты пользователя
+                const postsResponse = await axios.get(`https://jsonplaceholder.typicode.com/posts`, {
+                    params: { userId }
+                });
+                const posts = postsResponse.data;
+
+                // Получаем комментарии для постов пользователя
+                const commentsPromises = posts.map(post => 
+                    axios.get(`https://jsonplaceholder.typicode.com/comments`, {
+                        params: { postId: post.id }
+                    })
+                );
+                const commentsResponses = await Promise.all(commentsPromises);
+                let comments = [];
+                commentsResponses.forEach(response => {
+                    comments = comments.concat(response.data);
+                });
+
+                // Ограничиваем до 15 комментариев
+                comments = comments.slice(0, 15);
+                renderComments(comments, userId);
+            } catch (error) {
+                console.error('Ошибка при получении комментариев:', error);
+                commentsSection.innerHTML = '<p>Не удалось загрузить комментарии.</p>';
+            }
+        }
+
+        // Функция для рендеринга комментариев
+        function renderComments(comments, userId) {
+            commentsSection.innerHTML = `<h2>Комментарии пользователя ${userId}</h2>`;
+            if (comments.length === 0) {
+                commentsSection.innerHTML += '<p>Нет комментариев.</p>';
+                return;
+            }
+            const ul = document.createElement('ul');
+            ul.classList.add('comments-list');
+            comments.forEach(comment => {
+                const li = document.createElement('li');
+                li.innerHTML = `<strong>${comment.name}</strong>: ${comment.body}`;
+                ul.appendChild(li);
+            });
+            commentsSection.appendChild(ul);
+        }
+
+        // Функция для обработки роутинга при загрузке страницы
+        function handleRouting() {
+            const hash = window.location.hash;
+            if (hash.startsWith('#user-')) {
+                const userId = parseInt(hash.replace('#user-', ''), 10);
+                showUserComments(userId);
+            } else {
+                commentsSection.innerHTML = '';
+            }
+        }
+
+        // Слушатель изменения хэша для роутинга
+        window.addEventListener('hashchange', handleRouting);
+
+        // Инициализация приложения
+        fetchUsers();
+        handleRouting(); // Обработка текущего хэша при загрузке
+    </script>
+</body>
+</html>
