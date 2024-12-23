@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>SPA Приложение с Пользователями и Комментариями</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .user-list, .comments-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .user-list li a {
+            text-decoration: none;
+            color: blue;
+            cursor: pointer;
+        }
+        .user-list li a:hover {
+            text-decoration: underline;
+        }
+        .active {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Пользователи</h1>
+    <div id="app">
+        <ul class="user-list" id="userList"></ul>
+        <div id="commentsSection"></div>
+    </div>
+    <script src="main.js"></script>
+</body>
+</html>
